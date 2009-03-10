@@ -52,32 +52,32 @@ class Test::Unit::TestCase
 
     columns.each do |name, value|
       tested_column_names << name.to_s
-      assert obj.respond_to?(name.to_sym), "The #{class_name} model doesn't support the '#{name}' field!"
+      assert obj.respond_to?(name.to_sym), "The #{class_name} model doesn't support the '#{name}' field"
 
       next if value == :def_only
 
       # verify default values
       val = eval "obj.#{name}"
       if value[:default].blank?
-        assert val.blank?, "#{class_name}.#{name} has a value when it should be 'blank'!" unless value[:default].blank?
+        assert val.blank?, "#{class_name}.#{name} has a value when it should be 'blank'" unless value[:default].blank?
       else
-        assert_not_nil val, "The #{class_name}.#{name} field doesn't have a default value!"
-        assert_equal val, value[:default], "Invalid default value for #{class_name}.#{name}!"
+        assert_not_nil val, "The #{class_name}.#{name} field doesn't have a default value"
+        assert_equal val, value[:default], "Invalid default value for #{class_name}.#{name}"
       end
 
       # verify required values
       if value[:required]
         eval "obj.#{name} = nil"
         obj.valid?
-        assert get_columns_with_errors(obj).include?(name),
-          "#{class_name}.#{name} is required but passed validations with a nil value"
-      end
 
-      # verify required values
-      if value[:required]
-        eval "obj.#{name} = nil"
-        obj.valid?
-        assert get_columns_with_errors(obj).include?(name),
+        expected_error_exists = get_columns_with_errors(obj).include?(name)
+
+        unless expected_error_exists
+          n = name.to_s
+          expected_error_exists = get_columns_with_errors(obj).include?(n[0..-4].to_sym) if n =~ /_id$/i
+        end
+
+        assert expected_error_exists,
           "#{class_name}.#{name} is required but passed validations with a nil value"
       end
 
