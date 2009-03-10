@@ -69,7 +69,7 @@ class Test::Unit::TestCase
       if value[:required]
         eval "obj.#{name} = nil"
         obj.valid?
-        assert obj.columns_with_errors.include?(name),
+        assert get_columns_with_errors(obj).include?(name),
           "#{class_name}.#{name} is required but passed validations with a nil value"
       end
 
@@ -77,7 +77,7 @@ class Test::Unit::TestCase
       if value[:required]
         eval "obj.#{name} = nil"
         obj.valid?
-        assert obj.columns_with_errors.include?(name),
+        assert get_columns_with_errors(obj).include?(name),
           "#{class_name}.#{name} is required but passed validations with a nil value"
       end
 
@@ -96,7 +96,7 @@ class Test::Unit::TestCase
           # verify that no errors exist after assignment
           obj.valid?
 
-          assert obj.columns_with_errors.exclude?(name),
+          assert_equal false, get_columns_with_errors(obj).include?(name),
             "#{class_name} ##{obj.id} '#{name}' field has errors when it shouldn't!  assigned value: #{print_val}\n#{obj.errors[name]}"
         end
       end
@@ -114,7 +114,7 @@ class Test::Unit::TestCase
           # verify the field has errors after assignment
           eval "obj.#{name} = val"
           obj.valid?
-          assert obj.columns_with_errors.include?(name),
+          assert get_columns_with_errors(obj).include?(name),
             "#{class_name}.#{name} field should have errors! assigned value: #{print_val}"
 
           # test the error message
@@ -179,7 +179,7 @@ class Test::Unit::TestCase
             "#{parent_klass.name} is missing a relationship that points to #{klass.table_name}"
         end
 
-        if relations[:suppress_loopback].nil? || relations[:suppress_loopback].exclude?(name)
+        if relations[:suppress_loopback].nil? || !(relations[:suppress_loopback].include?(name))
           # test child relations back to me
           # testing here and not recursively so a single test doesn't spawn a system wide check
           if macro == :has_many || macro == :has_one
@@ -219,6 +219,14 @@ class Test::Unit::TestCase
           "#{klass.name} is missing a relationship test for: #{value.macro} #{name}"
       end
     end
+  end
+
+  private
+
+  # Returns an array of symbols.
+  # one symbol (column name) for each column that contains errors.
+  def get_columns_with_errors(model_instance)
+    list = model_instance.errors.map {|e| e[0].to_sym}
   end
 
 end
