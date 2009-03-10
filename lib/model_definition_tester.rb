@@ -1,6 +1,6 @@
 class Test::Unit::TestCase
 
-  IGNORE_PATTERN = /^id$|^created_at$|^created_on$|^updated_at$|^updated_on$/i
+  IGNORE_PATTERN = /^(id|created_at|created_on|updated_at|updated_on|created_by|updated_by)$/i
 
   # This method provides a powerful yet simple way to test model definitions. It
   # verifies that the expected columns are supported, and that certain column
@@ -13,14 +13,13 @@ class Test::Unit::TestCase
   #   class like so:_
   #
   #    <code>
-  #    Columns =
-  #    [
+  #    Columns = {
   #      :my_column => {:required => true, :default => "some value" :valid => ["value a", "123"], :invalid => ["a", "12"] },
   #      :another_column => :def_only
-  #    ]
+  #    }
   #    </code>
   #
-  #   Notice that Columns is an array.  Each value should be a symbol of :def_only or a Hash.
+  #   Each value should be a symbol of :def_only or a Hash.
   #   The column name should be used as the main key for the outer Hash.
   #   If the value is a Hash, the Hash should contain all the column's meta information to be tested.
   #   If the value is :def_only, we only verify that the model has defined the column... nothing else.
@@ -38,10 +37,9 @@ class Test::Unit::TestCase
   #
   # <code>
   #  class MyModelTest < ActiveSupport::TestCase
-  #    Columns =
-  #    [
+  #    Columns = {
   #      :my_column => {:required => true, :default => "some value" :valid => ["value a", "123"], :invalid => ["a", "12"] }
-  #    ]
+  #    }
   #
   #    def test_my_model_definition
   #      run_model_tests(MyModel.new, Columns)
@@ -141,9 +139,9 @@ class Test::Unit::TestCase
   # simply pass a model instance and the relationship meta data that should be tested.
   #
   # The relationship meta data looks like this:
-  #  Relations = [
-  #   :belongs_to => :software
-  #  ]
+  #  Relations = {
+  #   :belongs_to => [:software]
+  #  }
   #
   # This method will also test to ensure that the model doesn't define any
   # relationships not tested.  You can turn this off by passing false for "fail_untested".
@@ -155,6 +153,7 @@ class Test::Unit::TestCase
 
     relations.each do |macro, names|
       next if macro == :suppress_loopback
+      names = [names] unless names.is_a?(Array)
 
       names.each do |name|
         tested_relationships << name
@@ -173,7 +172,7 @@ class Test::Unit::TestCase
             "#{klass.name} is missing the '#{fk_name}' field which maps to #{name}"
 
           # verify the parent table maps back to me
-          parent_klass = eval reflection.class_name.uppercase_acronyms
+          parent_klass = eval reflection.class_name
           parent_reflection_tables = []
           parent_klass.reflections.each {|k,v| parent_reflection_tables << v.table_name }
           assert parent_reflection_tables.include?(klass.table_name),
